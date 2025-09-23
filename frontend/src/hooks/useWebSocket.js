@@ -1,89 +1,97 @@
 import { useEffect, useRef, useState } from 'react'
+import { io } from 'socket.io-client'
 import { useAuth } from '../context/AuthContext'
 
-export const useWebSocket = (url) => {
+export const useSocket = () => {
   const [socket, setSocket] = useState(null)
   const [connected, setConnected] = useState(false)
-  const [lastMessage, setLastMessage] = useState(null)
+  const [newIssue, setNewIssue] = useState(null)
+  const [updatedIssue, setUpdatedIssue] = useState(null)
+  const [assignedIssue, setAssignedIssue] = useState(null)
   const { token } = useAuth()
-  const reconnectTimeoutRef = useRef(null)
-  const reconnectAttempts = useRef(0)
-  const maxReconnectAttempts = 5
+  const socketRef = useRef(null)
 
   useEffect(() => {
-    if (!token) return
+    // Create socket connection
+    const serverUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'
+    
+    const socketInstance = io(serverUrl, {
+      auth: {
+        token: token
+      },
+      transports: ['websocket', 'polling']
+    })
 
-    const connect = () => {
-      try {
-        const ws = new WebSocket(`${url}?token=${token}`)
-        
-        ws.onopen = () => {
-          console.log('WebSocket connected')
-          setConnected(true)
-          setSocket(ws)
-          reconnectAttempts.current = 0
-        }
+    socketRef.current = socketInstance
+    setSocket(socketInstance)
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data)
-            setLastMessage(data)
-          } catch (error) {
-            console.error('Error parsing WebSocket message:', error)
-          }
-        }
+    // Connection event handlers
+    socketInstance.on('connect', () => {
+      console.log('🔌 Socket.IO connected:', socketInstance.id)
+      setConnected(true)
+    })
 
-        ws.onclose = (event) => {
-          console.log('WebSocket disconnected:', event.code, event.reason)
-          setConnected(false)
-          setSocket(null)
+    socketInstance.on('disconnect', (reason) => {
+      console.log('🔌 Socket.IO disconnected:', reason)
+      setConnected(false)
+    })
 
-          // Attempt to reconnect if not a manual close
-          if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
-            const delay = Math.pow(2, reconnectAttempts.current) * 1000 // Exponential backoff
-            reconnectTimeoutRef.current = setTimeout(() => {
-              reconnectAttempts.current++
-              connect()
-            }, delay)
-          }
-        }
+    socketInstance.on('connect_error', (error) => {
+      console.error('🔌 Socket.IO connection error:', error)
+      setConnected(false)
+    })
 
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error)
-          setConnected(false)
-        }
+    // Issue event handlers
+    socketInstance.on('new-issue', (issue) => {
+      console.log('📝 New issue received:', issue)
+      setNewIssue(issue)
+    })
 
-        return ws
-      } catch (error) {
-        console.error('Error creating WebSocket connection:', error)
-        setConnected(false)
-      }
-    }
+    socketInstance.on('issue-updated', (issue) => {
+      console.log('🔄 Issue updated:', issue)
+      setUpdatedIssue(issue)
+    })
 
-    const ws = connect()
+    socketInstance.on('issue-assigned', (issue) => {
+      console.log('👨‍💼 Issue assigned:', issue)
+      setAssignedIssue(issue)
+    })
 
+    // Cleanup on unmount
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
-      if (ws) {
-        ws.close(1000, 'Component unmounting')
-      }
+      console.log('🔌 Cleaning up socket connection')
+      socketInstance.disconnect()
     }
-  }, [url, token])
+  }, [token])
 
-  const sendMessage = (message) => {
+  const joinRoom = (room) => {
     if (socket && connected) {
-      socket.send(JSON.stringify(message))
-    } else {
-      console.warn('WebSocket not connected')
+      socket.emit('join-room', room)
+      console.log(`🏠 Joined room: ${room}`)
+    }
+  }
+
+  const leaveRoom = (room) => {
+    if (socket && connected) {
+      socket.emit('leave-room', room)
+      console.log(`🏠 Left room: ${room}`)
     }
   }
 
   return {
     socket,
     connected,
-    lastMessage,
-    sendMessage
+    newIssue,
+    updatedIssue,
+    assignedIssue,
+    joinRoom,
+    leaveRoom,
+    // Clear event data after consumption
+    clearNewIssue: () => setNewIssue(null),
+    clearUpdatedIssue: () => setUpdatedIssue(null),
+    clearAssignedIssue: () => setAssignedIssue(null)
   }
 }
+
+// Keep the old hook for backward compatibility
+export const useWebSocket = useSocket

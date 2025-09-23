@@ -21,11 +21,17 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const app = express();
 const server = createServer(app);
 
-// Initialize Socket.IO
+// Initialize Socket.IO with flexible CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    methods: ["GET", "POST"]
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174", 
+      "http://localhost:3000",
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   }
 });
 
@@ -35,22 +41,38 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false
   },
-  // Connection pool settings for production
-  max: 20,
+  // Connection pool settings optimized for Render
+  max: 10, // Reduced for free tier
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased timeout
+  acquireTimeoutMillis: 60000, // Added acquire timeout
+  createTimeoutMillis: 30000, // Added create timeout
+  destroyTimeoutMillis: 5000,
+  reapIntervalMillis: 1000,
+  createRetryIntervalMillis: 200,
 });
 
-// Test database connection
-pool.connect()
-  .then(client => {
-    console.log('✅ Connected to Render PostgreSQL database');
-    client.release();
-  })
-  .catch(err => {
-    console.error('❌ Database connection error:', err.stack);
-    process.exit(1);
-  });
+// Test database connection with retry logic
+const testConnection = async (retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const client = await pool.connect();
+      console.log('✅ Connected to Render PostgreSQL database');
+      client.release();
+      return;
+    } catch (err) {
+      console.error(`❌ Database connection attempt ${i + 1} failed:`, err.message);
+      if (i === retries - 1) {
+        console.error('❌ All database connection attempts failed');
+      } else {
+        console.log('🔄 Retrying database connection in 2 seconds...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+};
+
+testConnection();
 
 // Security middleware
 app.use(helmet({
@@ -75,10 +97,17 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration - allow multiple frontend ports
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174", 
+    "http://localhost:3000",
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // Body parsing middleware
