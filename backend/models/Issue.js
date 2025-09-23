@@ -315,6 +315,70 @@ class Issue {
 
     return results;
   }
+
+  async getTrendData(months = 6) {
+    const query = `
+      WITH monthly_stats AS (
+        SELECT 
+          DATE_TRUNC('month', created_at) as month,
+          COUNT(*) as issues,
+          COUNT(CASE WHEN status = 'resolved' THEN 1 END) as resolved
+        FROM issues 
+        WHERE created_at >= NOW() - INTERVAL '${months} months'
+        GROUP BY DATE_TRUNC('month', created_at)
+        ORDER BY month
+      )
+      SELECT 
+        TO_CHAR(month, 'Mon') as month,
+        issues::integer,
+        resolved::integer
+      FROM monthly_stats
+    `;
+
+    try {
+      const result = await this.pool.query(query);
+      return result.rows;
+    } catch (error) {
+      console.error('Error fetching trend data:', error);
+      return [];
+    }
+  }
+
+  async getOfficialStats(officialId) {
+    const queries = {
+      pending: `
+        SELECT COUNT(*) as count 
+        FROM issues 
+        WHERE assigned_to = $1 AND status IN ('acknowledged', 'reported')
+      `,
+      inProgress: `
+        SELECT COUNT(*) as count 
+        FROM issues 
+        WHERE assigned_to = $1 AND status = 'in_progress'
+      `,
+      resolvedThisWeek: `
+        SELECT COUNT(*) as count 
+        FROM issues 
+        WHERE assigned_to = $1 
+        AND status = 'resolved' 
+        AND resolved_at >= NOW() - INTERVAL '7 days'
+      `
+    };
+
+    const results = {};
+    
+    for (const [key, query] of Object.entries(queries)) {
+      try {
+        const result = await this.pool.query(query, [parseInt(officialId)]);
+        results[key] = parseInt(result.rows[0].count);
+      } catch (error) {
+        console.error(`Error fetching ${key} for official ${officialId}:`, error);
+        results[key] = 0;
+      }
+    }
+
+    return results;
+  }
 }
 
 module.exports = Issue;

@@ -46,12 +46,54 @@ router.get('/analytics', [
   }
 });
 
+// @route   GET /api/issues/trends
+// @desc    Get trend data for charts
+// @access  Private (Admin only)
+router.get('/trends', [
+  auth,
+  requireRole(['admin'])
+], async (req, res) => {
+  try {
+    const issueModel = new Issue(req.db);
+    const months = parseInt(req.query.months) || 6;
+    const trends = await issueModel.getTrendData(months);
+    
+    res.json(trends);
+  } catch (error) {
+    console.error('Get trends error:', error);
+    res.status(500).json({ error: 'Server error while fetching trends' });
+  }
+});
+
+// @route   GET /api/issues/official-stats/:officialId
+// @desc    Get statistics for specific official or serviceman
+// @access  Private (Official/Serviceman/Admin only)
+router.get('/official-stats/:officialId', [
+  auth,
+  requireRole(['official', 'serviceman', 'admin'])
+], async (req, res) => {
+  try {
+    // Officials/Servicemen can only view their own stats, admins can view any
+    if ((req.user.role === 'official' || req.user.role === 'serviceman') && req.user.id !== parseInt(req.params.officialId)) {
+      return res.status(403).json({ error: 'Access denied. Can only view your own statistics.' });
+    }
+
+    const issueModel = new Issue(req.db);
+    const stats = await issueModel.getOfficialStats(req.params.officialId);
+    
+    res.json(stats);
+  } catch (error) {
+    console.error('Get official stats error:', error);
+    res.status(500).json({ error: 'Server error while fetching official statistics' });
+  }
+});
+
 // @route   GET /api/issues/assigned/:officialId
 // @desc    Get issues assigned to specific official
-// @access  Private (Official/Admin only)
+// @access  Private (Official/Serviceman/Admin only)
 router.get('/assigned/:officialId', [
   auth,
-  requireRole(['official', 'admin'])
+  requireRole(['official', 'serviceman', 'admin'])
 ], async (req, res) => {
   try {
     const issueModel = new Issue(req.db);
@@ -136,10 +178,10 @@ router.post('/', [
 
 // @route   PUT /api/issues/:id/status
 // @desc    Update issue status
-// @access  Private (Official/Admin only)
+// @access  Private (Official/Serviceman/Admin only)
 router.put('/:id/status', [
   auth,
-  requireRole(['official', 'admin']),
+  requireRole(['official', 'serviceman', 'admin']),
   body('status').isIn(['reported', 'acknowledged', 'in_progress', 'resolved', 'verified']).withMessage('Invalid status'),
   body('internal_notes').optional().isString().withMessage('Internal notes must be a string')
 ], async (req, res) => {
