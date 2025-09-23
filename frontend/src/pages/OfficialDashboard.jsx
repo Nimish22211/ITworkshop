@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Badge } from '../components/ui/badge'
 import { MapPin, CheckCircle, AlertTriangle, ClipboardCheck, Wrench } from 'lucide-react'
+import {Link} from 'react-router-dom'
+
 
 const OfficialDashboard = () => {
   const { user } = useAuth()
@@ -18,7 +20,12 @@ const OfficialDashboard = () => {
             </div>
             <div className="flex items-center gap-2">
               <Badge className="bg-blue-50 text-blue-700 border-blue-200">Assigned</Badge>
-              <Button variant="outline">View Map</Button>
+              <Button variant="outline">
+                <Link to="/map">
+                View Map
+                </Link>
+                
+                </Button>
             </div>
           </div>
         </div>

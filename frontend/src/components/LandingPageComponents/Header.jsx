@@ -44,9 +44,19 @@ export function Header() {
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">UP</span>
+            <span className="text-primary-foreground font-bold text-sm">'
+           <Link to="/">
+              
+              UP
+           </Link>
+              
+              </span>
           </div>
-          <span className="text-xl font-bold text-foreground">Urban Pulse</span>
+          <span className="text-xl font-bold text-foreground">
+           <Link to="/">
+            Urban Pulse
+           </Link>
+            </span>
         </div>
 
         <nav className="hidden md:flex items-center space-x-8">
@@ -81,9 +91,11 @@ export function Header() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  {user.role === "citizen" &&
+                  <DropdownMenuItem asChild> 
                     <Link to="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
+                  }
                   {user.role === 'admin' && (
                     <DropdownMenuItem asChild>
                       <Link to="/admin/dashboard">Admin Panel</Link>

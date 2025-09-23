@@ -60,12 +60,12 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                  {/* <ProtectedRoute requiredRole="serviceman"> */}
+                    {/* </ProtectedRoute> */}
                 <Route 
                   path="/serviceman/dashboard" 
                   element={
-                    <ProtectedRoute requiredRole="serviceman">
                       <ServiceManDashboard />
-                    </ProtectedRoute>
                   }
                 />
               </Routes>
