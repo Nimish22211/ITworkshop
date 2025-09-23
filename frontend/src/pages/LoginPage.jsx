@@ -40,7 +40,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-20">
         <div className="text-center">
           <div className="flex justify-center">
             <MapPin className="h-12 w-12 text-blue-600" />
@@ -58,7 +58,7 @@ const LoginPage = () => {
             <CardTitle>Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-1">
               <div>
                 <Label htmlFor="email">Email address</Label>
                 <Input
@@ -101,12 +101,13 @@ const LoginPage = () => {
               </div>
 
               <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading || loading}
-              >
-                {isLoading || loading ? 'Signing in...' : 'Sign in'}
-              </Button>
+  type="submit"
+  className="w-full" 
+  disabled={isLoading || loading}
+>
+  {isLoading || loading ? 'Signing in...' : 'Sign in'}
+</Button>
+
             </form>
 
             <div className="mt-6 text-center">

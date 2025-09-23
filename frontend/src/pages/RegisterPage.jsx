@@ -122,14 +122,14 @@ const RegisterPage = () => {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto bg-white" >
                     <SelectItem value="citizen">Citizen</SelectItem>
                     <SelectItem value="official">Official</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.role === 'official' && (
+              {/* {formData.role === 'official' && (
                 <div>
                   <Label htmlFor="department">Department</Label>
                   <Select
@@ -139,7 +139,7 @@ const RegisterPage = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-60 overflow-y-auto bg-white">
                       {DEPARTMENTS.map((dept) => (
                         <SelectItem key={dept.value} value={dept.value}>
                           {dept.label}
@@ -148,7 +148,7 @@ const RegisterPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              )}
+              )} */}
 
               <div>
                 <Label htmlFor="password">Password</Label>

@@ -147,7 +147,7 @@ const ReportIssuePage = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto bg-white">
                     {ISSUE_CATEGORIES.map((category) => (
                       <SelectItem key={category.value} value={category.value}>
                         <span className="flex items-center space-x-2">
@@ -183,7 +183,7 @@ const ReportIssuePage = () => {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto bg-white">
                     {SEVERITY_LEVELS.map((level) => (
                       <SelectItem key={level.value} value={level.value.toString()}>
                         <div>

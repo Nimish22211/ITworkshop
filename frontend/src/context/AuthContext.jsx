@@ -85,6 +85,8 @@ export const AuthProvider = ({ children }) => {
       
       const { user, token } = response.data
       localStorage.setItem('token', token)
+
+      console.log("user data : ", user, token)
       
       dispatch({
         type: 'LOGIN_SUCCESS',
@@ -104,8 +106,11 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       dispatch({ type: 'LOGIN_START' })
+      console.log("user data : ", userData)
       const response = await apiService.post('/auth/register', userData)
-      
+      if (response?.error) {
+        throw new Error(response.details[0].msg)
+      }
       const { user, token } = response.data
       localStorage.setItem('token', token)
       
