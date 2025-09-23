@@ -94,7 +94,15 @@ export const AuthProvider = ({ children }) => {
       })
       
       toast.success('Login successful!')
-      return { success: true }
+      let redirectPath = '/dashboard'; // Default for citizen
+      if (user.role === 'admin') {
+        redirectPath = '/admin/dashboard';
+      } else if (user.role === 'official') {
+        redirectPath = '/official/dashboard';
+      } else if (user.role === 'serviceman') {
+        redirectPath = '/serviceman/dashboard';
+      }
+      return { success: true, redirectPath };
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' })
       const message = error.response?.data?.error || 'Login failed'
@@ -120,7 +128,15 @@ export const AuthProvider = ({ children }) => {
       })
       
       toast.success('Registration successful!')
-      return { success: true }
+      let redirectPath = '/dashboard'; // Default for citizen
+      if (user.role === 'admin') {
+        redirectPath = '/admin/dashboard';
+      } else if (user.role === 'official') {
+        redirectPath = '/official/dashboard';
+      } else if (user.role === 'serviceman') {
+        redirectPath = '/serviceman/dashboard';
+      }
+      return { success: true, redirectPath };
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' })
       const message = error.response?.data?.error || 'Registration failed'

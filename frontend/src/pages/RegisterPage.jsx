@@ -44,7 +44,7 @@ const RegisterPage = () => {
       const { confirmPassword, ...userData } = formData
       const result = await register(userData)
       if (result.success) {
-        navigate('/dashboard')
+        navigate(result.redirectPath)
       }
     } catch (error) {
       console.error('Registration error:', error)

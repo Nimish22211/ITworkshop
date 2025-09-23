@@ -29,7 +29,7 @@ const LoginPage = () => {
     try {
       const result = await login(formData.email, formData.password)
       if (result.success) {
-        navigate('/dashboard')
+        navigate(result.redirectPath)
       }
     } catch (error) {
       console.error('Login error:', error)
