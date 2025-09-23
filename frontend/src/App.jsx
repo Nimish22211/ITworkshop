@@ -9,6 +9,7 @@ import ReportIssuePage from './pages/ReportIssuePage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import Landing from './pages/Landing'
 import IssueDetailsPage from './pages/IssueDetailsPage'
 
 // Components
@@ -24,6 +25,7 @@ function App() {
             <Header />
             <main>
               <Routes>
+                <Route path="/home" element={<Landing />} />
                 <Route path="/" element={<HomePage />} />
                 <Route path="/report" element={<ReportIssuePage />} />
                 <Route path="/login" element={<LoginPage />} />
