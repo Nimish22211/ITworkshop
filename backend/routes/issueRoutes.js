@@ -10,15 +10,57 @@ const router = express.Router();
 // @access  Public (with optional auth)
 router.get('/', optionalAuth, async (req, res) => {
   try {
+    console.log('GET /api/issues - Request received');
+    console.log('Query filters:', req.query);
+    console.log('User authenticated:', !!req.user);
+    
     const issueModel = new Issue(req.db);
     const filters = req.query;
     
     const issues = await issueModel.findAll(filters);
+    console.log(`Found ${issues.length} issues`);
     
     res.json(issues);
   } catch (error) {
     console.error('Get issues error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Server error while fetching issues' });
+  }
+});
+
+// @route   GET /api/issues/analytics
+// @desc    Get analytics data
+// @access  Private (Admin only)
+router.get('/analytics', [
+  auth,
+  requireRole(['admin'])
+], async (req, res) => {
+  try {
+    const issueModel = new Issue(req.db);
+    const analytics = await issueModel.getAnalytics();
+    
+    res.json(analytics);
+  } catch (error) {
+    console.error('Get analytics error:', error);
+    res.status(500).json({ error: 'Server error while fetching analytics' });
+  }
+});
+
+// @route   GET /api/issues/assigned/:officialId
+// @desc    Get issues assigned to specific official
+// @access  Private (Official/Admin only)
+router.get('/assigned/:officialId', [
+  auth,
+  requireRole(['official', 'admin'])
+], async (req, res) => {
+  try {
+    const issueModel = new Issue(req.db);
+    const issues = await issueModel.findByAssignedOfficial(req.params.officialId);
+    
+    res.json(issues);
+  } catch (error) {
+    console.error('Get assigned issues error:', error);
+    res.status(500).json({ error: 'Server error while fetching assigned issues' });
   }
 });
 
@@ -167,24 +209,6 @@ router.put('/:id/assign', [
   }
 });
 
-// @route   GET /api/issues/assigned/:officialId
-// @desc    Get issues assigned to specific official
-// @access  Private (Official/Admin only)
-router.get('/assigned/:officialId', [
-  auth,
-  requireRole(['official', 'admin'])
-], async (req, res) => {
-  try {
-    const issueModel = new Issue(req.db);
-    const issues = await issueModel.findByAssignedOfficial(req.params.officialId);
-    
-    res.json(issues);
-  } catch (error) {
-    console.error('Get assigned issues error:', error);
-    res.status(500).json({ error: 'Server error while fetching assigned issues' });
-  }
-});
-
 // @route   GET /api/issues/:id/history
 // @desc    Get issue status history
 // @access  Private
@@ -197,24 +221,6 @@ router.get('/:id/history', auth, async (req, res) => {
   } catch (error) {
     console.error('Get issue history error:', error);
     res.status(500).json({ error: 'Server error while fetching issue history' });
-  }
-});
-
-// @route   GET /api/issues/analytics
-// @desc    Get analytics data
-// @access  Private (Admin only)
-router.get('/analytics', [
-  auth,
-  requireRole(['admin'])
-], async (req, res) => {
-  try {
-    const issueModel = new Issue(req.db);
-    const analytics = await issueModel.getAnalytics();
-    
-    res.json(analytics);
-  } catch (error) {
-    console.error('Get analytics error:', error);
-    res.status(500).json({ error: 'Server error while fetching analytics' });
   }
 });
 

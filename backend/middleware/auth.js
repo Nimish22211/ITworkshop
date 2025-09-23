@@ -47,15 +47,21 @@ const optionalAuth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
-    if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const userModel = new User(req.db);
-      const user = await userModel.findById(decoded.userId);
-      req.user = user;
+    if (token && process.env.JWT_SECRET) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userModel = new User(req.db);
+        const user = await userModel.findById(decoded.userId);
+        req.user = user;
+      } catch (jwtError) {
+        // Invalid token, but continue without authentication for optional auth
+        console.log('Optional auth: Invalid token, continuing without auth');
+      }
     }
     
     next();
   } catch (error) {
+    console.error('Optional auth error:', error);
     // Continue without authentication for optional auth
     next();
   }
