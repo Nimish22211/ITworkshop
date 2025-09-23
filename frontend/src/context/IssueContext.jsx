@@ -177,6 +177,53 @@ export const IssueProvider = ({ children }) => {
     }
   }
 
+  const fetchAssignedIssues = async (officialId) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      const response = await apiService.get(`/issues/assigned/${officialId}`)
+      dispatch({ type: 'SET_ISSUES', payload: response.data })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching assigned issues:', error)
+      toast.error('Failed to fetch assigned issues')
+      dispatch({ type: 'SET_LOADING', payload: false })
+      return []
+    }
+  }
+
+  const fetchIssueHistory = async (issueId) => {
+    try {
+      const response = await apiService.get(`/issues/${issueId}/history`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching issue history:', error)
+      toast.error('Failed to fetch issue history')
+      return []
+    }
+  }
+
+  const fetchTrendData = async (months = 6) => {
+    try {
+      const response = await apiService.get(`/issues/trends?months=${months}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching trend data:', error)
+      toast.error('Failed to fetch trend data')
+      return []
+    }
+  }
+
+  const fetchOfficialStats = async (officialId) => {
+    try {
+      const response = await apiService.get(`/issues/official-stats/${officialId}`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching official stats:', error)
+      toast.error('Failed to fetch official statistics')
+      return { pending: 0, inProgress: 0, resolvedThisWeek: 0 }
+    }
+  }
+
   const setFilters = (filters) => {
     dispatch({ type: 'SET_FILTERS', payload: filters })
   }
@@ -193,6 +240,10 @@ export const IssueProvider = ({ children }) => {
     updateIssueStatus,
     assignIssue,
     fetchAnalytics,
+    fetchAssignedIssues,
+    fetchIssueHistory,
+    fetchTrendData,
+    fetchOfficialStats,
     setFilters,
     clearFilters
   }

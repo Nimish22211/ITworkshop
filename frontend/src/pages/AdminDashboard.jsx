@@ -25,18 +25,21 @@ const StatCard = ({ title, value, icon: Icon }) => (
 
 const AdminDashboard = () => {
   const { user } = useAuth()
-  const { analytics, fetchAnalytics, issues } = useIssues()
+  const { analytics, fetchAnalytics, fetchTrendData, issues } = useIssues()
   const [loading, setLoading] = useState(true)
+  const [trendData, setTrendData] = useState([])
 
   useEffect(() => {
-    const loadAnalytics = async () => {
+    const loadData = async () => {
       try {
         await fetchAnalytics()
+        const trends = await fetchTrendData(6)
+        setTrendData(trends)
       } finally {
         setLoading(false)
       }
     }
-    loadAnalytics()
+    loadData()
   }, [])
 
   // Process data for charts
@@ -52,15 +55,7 @@ const AdminDashboard = () => {
     fill: getColorForStatus(item.status)
   })) || []
 
-  // Trend data (mock for now - in real app would come from backend)
-  const trendData = [
-    { month: 'Jan', issues: 45, resolved: 38 },
-    { month: 'Feb', issues: 52, resolved: 45 },
-    { month: 'Mar', issues: 48, resolved: 42 },
-    { month: 'Apr', issues: 61, resolved: 55 },
-    { month: 'May', issues: 55, resolved: 48 },
-    { month: 'Jun', issues: 67, resolved: 58 }
-  ]
+  // Real trend data from backend
 
   function getColorForCategory(category) {
     const colors = {
