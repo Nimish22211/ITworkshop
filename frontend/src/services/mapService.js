@@ -18,8 +18,8 @@ export const getCurrentLocation = () => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // 5 minutes
+        timeout: 5000, // Reduced to 5 seconds
+        maximumAge: 60000 // 1 minute for fresher location
       }
     )
   })
@@ -27,14 +27,33 @@ export const getCurrentLocation = () => {
 
 export const getAddressFromCoordinates = async (latitude, longitude) => {
   try {
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+    
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+      { signal: controller.signal }
     )
+    
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
     const data = await response.json()
-    return data.display_name || 'Unknown location'
+    
+    if (data && data.display_name) {
+      return data.display_name
+    }
+    
+    // Fallback to coordinates if no address found
+    return `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
   } catch (error) {
     console.error('Error getting address:', error)
-    return 'Unknown location'
+    // Return coordinates as fallback instead of "Unknown location"
+    return `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
   }
 }
 

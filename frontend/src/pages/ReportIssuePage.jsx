@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIssues } from '../context/IssueContext'
 import { useGeolocation } from '../hooks/useGeolocation'
@@ -17,41 +17,94 @@ import toast from 'react-hot-toast'
 const ReportIssuePage = () => {
   const navigate = useNavigate()
   const { createIssue } = useIssues()
-  const { location, getLocation, loading: locationLoading } = useGeolocation()
+  const { location, getLocation, loading: locationLoading, initialLocationFetched } = useGeolocation()
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
     severity: 3,
-    latitude: location?.latitude || '',
-    longitude: location?.longitude || '',
+    latitude: '',
+    longitude: '',
     address: '',
     photos: []
   })
   
+  const [addressLoading, setAddressLoading] = useState(false)
+  
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  
+  // Update form data when location is available
+  useEffect(() => {
+    if (location && !formData.latitude && !formData.longitude) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: location.latitude,
+        longitude: location.longitude
+      }))
+      // Auto-fetch address when location is set
+      handleAddressUpdate(location.latitude, location.longitude)
+    }
+  }, [location, formData.latitude, formData.longitude])
+  
+  // Handle manual coordinate changes
+  const handleCoordinateChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Update address when both coordinates are available
+    if (field === 'latitude' && formData.longitude && value) {
+      handleAddressUpdate(parseFloat(value), parseFloat(formData.longitude))
+    } else if (field === 'longitude' && formData.latitude && value) {
+      handleAddressUpdate(parseFloat(formData.latitude), parseFloat(value))
+    }
+  }
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleAddressUpdate = async (lat, lng) => {
+    if (!lat || !lng) return
+    
+    setAddressLoading(true)
+    try {
+      const address = await getAddressFromCoordinates(lat, lng)
+      setFormData(prev => ({ ...prev, address }))
+    } catch (error) {
+      console.error('Failed to get address:', error)
+      // Don't show error toast for address resolution failures
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+  
   const handleLocationClick = async () => {
     try {
       const coords = await getLocation()
-      const address = await getAddressFromCoordinates(coords.latitude, coords.longitude)
       
       setFormData(prev => ({
         ...prev,
         latitude: coords.latitude,
-        longitude: coords.longitude,
-        address
+        longitude: coords.longitude
       }))
+      
+      // Update address
+      await handleAddressUpdate(coords.latitude, coords.longitude)
       
       toast.success('Location updated!')
     } catch (error) {
-      toast.error('Failed to get location: ' + error.message)
+      let errorMessage = 'Failed to get location'
+      
+      if (error.code === 1) {
+        errorMessage = 'Location access denied. Please enable location permissions.'
+      } else if (error.code === 2) {
+        errorMessage = 'Location unavailable. Please try again.'
+      } else if (error.code === 3) {
+        errorMessage = 'Location request timed out. Please try again.'
+      }
+      
+      toast.error(errorMessage)
     }
   }
 
@@ -199,12 +252,18 @@ const ReportIssuePage = () => {
               {/* Location */}
               <div>
                 <Label>Location *</Label>
+                {!initialLocationFetched && locationLoading && (
+                  <div className="text-sm text-blue-600 mb-2 flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                    <span>Getting your location automatically...</span>
+                  </div>
+                )}
                 <div className="space-y-3">
                   <div className="flex space-x-2">
                     <Input
                       placeholder="Latitude"
                       value={formData.latitude}
-                      onChange={(e) => handleInputChange('latitude', e.target.value)}
+                      onChange={(e) => handleCoordinateChange('latitude', e.target.value)}
                       type="number"
                       step="any"
                       required
@@ -212,7 +271,7 @@ const ReportIssuePage = () => {
                     <Input
                       placeholder="Longitude"
                       value={formData.longitude}
-                      onChange={(e) => handleInputChange('longitude', e.target.value)}
+                      onChange={(e) => handleCoordinateChange('longitude', e.target.value)}
                       type="number"
                       step="any"
                       required
@@ -222,15 +281,34 @@ const ReportIssuePage = () => {
                       variant="outline"
                       onClick={handleLocationClick}
                       disabled={locationLoading}
+                      className="min-w-[100px]"
                     >
-                      <MapPin className="h-4 w-4" />
+                      {locationLoading ? (
+                        <div className="flex items-center space-x-1">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                          <span className="text-xs">Getting...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="h-4 w-4" />
+                          <span className="text-xs">Get Location</span>
+                        </div>
+                      )}
                     </Button>
                   </div>
-                  <Input
-                    placeholder="Address (auto-filled)"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="Address (auto-filled)"
+                      value={formData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      disabled={addressLoading}
+                    />
+                    {addressLoading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
