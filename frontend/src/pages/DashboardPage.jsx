@@ -78,10 +78,10 @@ const DashboardPage = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 ">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-60 overflow-y-auto bg-white">
                   <SelectItem value="all">All Issues</SelectItem>
                   {ISSUE_STATUSES.map((status) => (
                     <SelectItem key={status.value} value={status.value}>
