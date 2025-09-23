@@ -1,10 +1,14 @@
 import { useAuth } from '../context/AuthContext'
+import { useIssues } from '../context/IssueContext'
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { AlertCircle, Clock, Network, Cpu, BarChart3, Database, Shield } from 'lucide-react'
-import { mockApi } from '../services/mockApi'
+import { AlertCircle, Clock, Network, Cpu, BarChart3, Database, Shield, TrendingUp, Users, MapPin } from 'lucide-react'
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
+} from 'recharts'
 
 const StatCard = ({ title, value, icon: Icon }) => (
   <Card>
@@ -21,20 +25,66 @@ const StatCard = ({ title, value, icon: Icon }) => (
 
 const AdminDashboard = () => {
   const { user } = useAuth()
-  const [metrics, setMetrics] = useState(null)
+  const { analytics, fetchAnalytics, issues } = useIssues()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const load = async () => {
+    const loadAnalytics = async () => {
       try {
-        const data = await mockApi.getAdminMetrics()
-        setMetrics(data)
+        await fetchAnalytics()
       } finally {
         setLoading(false)
       }
     }
-    load()
+    loadAnalytics()
   }, [])
+
+  // Process data for charts
+  const categoryData = analytics?.issuesByCategory?.map(item => ({
+    name: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+    value: parseInt(item.count),
+    fill: getColorForCategory(item.category)
+  })) || []
+
+  const statusData = analytics?.issuesByStatus?.map(item => ({
+    name: item.status.replace('_', ' ').toUpperCase(),
+    value: parseInt(item.count),
+    fill: getColorForStatus(item.status)
+  })) || []
+
+  // Trend data (mock for now - in real app would come from backend)
+  const trendData = [
+    { month: 'Jan', issues: 45, resolved: 38 },
+    { month: 'Feb', issues: 52, resolved: 45 },
+    { month: 'Mar', issues: 48, resolved: 42 },
+    { month: 'Apr', issues: 61, resolved: 55 },
+    { month: 'May', issues: 55, resolved: 48 },
+    { month: 'Jun', issues: 67, resolved: 58 }
+  ]
+
+  function getColorForCategory(category) {
+    const colors = {
+      pothole: '#ef4444',
+      streetlight: '#f59e0b',
+      graffiti: '#8b5cf6',
+      waste: '#10b981',
+      sewage: '#3b82f6',
+      road: '#f97316',
+      other: '#6b7280'
+    }
+    return colors[category] || '#6b7280'
+  }
+
+  function getColorForStatus(status) {
+    const colors = {
+      reported: '#ef4444',
+      acknowledged: '#f59e0b',
+      in_progress: '#3b82f6',
+      resolved: '#10b981',
+      verified: '#8b5cf6'
+    }
+    return colors[status] || '#6b7280'
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -54,61 +104,143 @@ const AdminDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Performance Chart remains */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" /> Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 bg-gray-50 border rounded-md flex items-center justify-center text-gray-400 text-sm">
-                  Chart Placeholder
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          {/* Placeholder for other potential admin specific items if needed */}
-        </div>
-
-        {/* New Metric Cards */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard
-            title="Total Complaints (state-wide)"
-            value={loading ? '—' : metrics?.totalComplaints?.toLocaleString()}
+            title="Total Issues"
+            value={loading ? '—' : analytics?.totalIssues?.toLocaleString() || '0'}
             icon={AlertCircle}
           />
           <StatCard
-            title="Complaints Resolved %"
-            value={loading ? '—' : `${Math.round((metrics.resolvedComplaints / metrics.totalComplaints) * 100)}%`}
+            title="Resolved Issues"
+            value={loading ? '—' : analytics?.resolvedIssues?.toLocaleString() || '0'}
             icon={Shield}
           />
           <StatCard
-            title="Average Resolution Time (days/hours)"
-            value={loading ? '—' : `${Math.floor(metrics.averageResolutionHours / 24)}d ${Math.round(metrics.averageResolutionHours % 24)}h`}
+            title="Resolution Rate"
+            value={loading ? '—' : analytics?.totalIssues ? `${Math.round((analytics.resolvedIssues / analytics.totalIssues) * 100)}%` : '0%'}
+            icon={TrendingUp}
+          />
+          <StatCard
+            title="Avg Resolution Time"
+            value={loading ? '—' : analytics?.avgResolutionTime ? `${Math.round(analytics.avgResolutionTime)}h` : '—'}
             icon={Clock}
           />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <StatCard
-            title="Complaints Escalated %"
-            value={loading ? '—' : `${Math.round((metrics.escalatedComplaints / metrics.totalComplaints) * 100)}%`}
-            icon={AlertCircle}
-          />
-          <StatCard
-            title="Total Officials Created (district-level)"
-            value={loading ? '—' : metrics?.totalOfficials?.toLocaleString()}
-            icon={Database}
-          />
-          <StatCard
-            title="Total Service Men (via officials)"
-            value={loading ? '—' : metrics?.totalServiceMen?.toLocaleString()}
-            icon={Shield}
-          />
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Issues by Category */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Issues by Category
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={categoryData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Issues by Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Issues by Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Trend Analysis */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Issue Trends (Last 6 Months)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="issues" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="resolved" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {issues.slice(0, 5).map((issue) => (
+                <div key={issue.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      issue.status === 'reported' ? 'bg-red-500' :
+                      issue.status === 'acknowledged' ? 'bg-yellow-500' :
+                      issue.status === 'in_progress' ? 'bg-blue-500' :
+                      issue.status === 'resolved' ? 'bg-green-500' :
+                      'bg-purple-500'
+                    }`}></div>
+                    <div>
+                      <p className="font-medium text-sm">{issue.title}</p>
+                      <p className="text-xs text-gray-500">{issue.category} • {issue.address}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">
+                      {new Date(issue.created_at).toLocaleDateString()}
+                    </p>
+                    <Badge variant="outline" className="text-xs">
+                      {issue.status.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

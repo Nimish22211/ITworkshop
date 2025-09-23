@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
 import { apiService } from '../services/apiService'
+import { socketService } from '../services/socketService'
 import toast from 'react-hot-toast'
 
 const IssueContext = createContext()
@@ -45,6 +46,56 @@ const issueReducer = (state, action) => {
 
 export const IssueProvider = ({ children }) => {
   const [state, dispatch] = useReducer(issueReducer, initialState)
+
+  // Initialize Socket.IO connection and listeners
+  useEffect(() => {
+    socketService.connect()
+
+    // Listen for real-time issue updates
+    socketService.on('issue-created', (issue) => {
+      dispatch({ type: 'ADD_ISSUE', payload: issue })
+      toast.success(`New issue reported: ${issue.title}`, {
+        duration: 3000,
+        icon: '📍'
+      })
+    })
+
+    socketService.on('issue-updated', (issue) => {
+      dispatch({ type: 'UPDATE_ISSUE', payload: issue })
+      toast.success(`Issue updated: ${issue.title}`, {
+        duration: 3000,
+        icon: '🔄'
+      })
+    })
+
+    socketService.on('issue-status-changed', (data) => {
+      dispatch({ type: 'UPDATE_ISSUE', payload: data.issue })
+      toast.success(`Issue status changed to: ${data.issue.status}`, {
+        duration: 3000,
+        icon: '✅'
+      })
+    })
+
+    socketService.on('issue-assigned', (data) => {
+      dispatch({ type: 'UPDATE_ISSUE', payload: data.issue })
+      toast.success(`Issue assigned to: ${data.assignedTo}`, {
+        duration: 3000,
+        icon: '👤'
+      })
+    })
+
+    // Join the issues room for real-time updates
+    socketService.emit('join-room', 'issues')
+
+    return () => {
+      socketService.off('issue-created')
+      socketService.off('issue-updated')
+      socketService.off('issue-status-changed')
+      socketService.off('issue-assigned')
+      socketService.emit('leave-room', 'issues')
+      socketService.disconnect()
+    }
+  }, [])
 
   const fetchIssues = async (filters = {}) => {
     try {

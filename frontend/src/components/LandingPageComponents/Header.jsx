@@ -1,10 +1,41 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Button } from "../ui/button"
-// import { ThemeT  oggle } from "@/components/theme-toggle"
+import { useAuth } from "../../context/AuthContext"
+import NotificationCenter from "../Common/NotificationCenter"
+import { User, LogOut } from "lucide-react"
+// Simple dropdown implementation without Radix UI for now
+const DropdownMenu = ({ children }) => <div className="relative">{children}</div>
+const DropdownMenuTrigger = ({ children, asChild, ...props }) => 
+  asChild ? children : <button {...props}>{children}</button>
+const DropdownMenuContent = ({ children, align = "end" }) => (
+  <div className={`absolute top-full mt-2 ${align === 'end' ? 'right-0' : 'left-0'} 
+    min-w-[200px] bg-white border border-gray-200 rounded-md shadow-lg z-50`}>
+    {children}
+  </div>
+)
+const DropdownMenuItem = ({ children, asChild, ...props }) => 
+  asChild ? children : (
+    <div className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer" {...props}>
+      {children}
+    </div>
+  )
+const DropdownMenuLabel = ({ children }) => (
+  <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b border-gray-100">
+    {children}
+  </div>
+)
+const DropdownMenuSeparator = () => <div className="border-t border-gray-100 my-1" />
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,16 +75,59 @@ export function Header() {
         </nav>
 
         <div className="flex items-center space-x-4">
-          {/* <ThemeToggle /> */}
-          <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground">
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link to="/register">Register</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/report">Report</Link>
-          </Button>
+          {user ? (
+            <>
+              <NotificationCenter />
+              <Button asChild variant="outline">
+                <Link to="/map">Map</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/report">Report</Link>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>{user.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  {user.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/dashboard">Admin Panel</Link>
+                    </DropdownMenuItem>
+                  )}
+                  {user.role === 'official' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/official/dashboard">Official Panel</Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link to="/register">Register</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/report">Report</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

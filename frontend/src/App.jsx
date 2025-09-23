@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { IssueProvider } from './context/IssueContext'
+import { NotificationProvider } from './context/NotificationContext'
 import { Toaster } from 'react-hot-toast'
 
 // Pages
@@ -22,11 +23,12 @@ import ProtectedRoute from './components/Common/ProtectedRoute'
 function App() {
   return (
     <AuthProvider>
-      <IssueProvider>
-        <Router>
-          <div className="min-h-screen bg-background">
-            <Header />
-            <main>
+      <NotificationProvider>
+        <IssueProvider>
+          <Router>
+            <div className="min-h-screen bg-background">
+              <Header />
+              <main>
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/map" element={<HomePage />} />
@@ -67,21 +69,22 @@ function App() {
                   }
                 />
               </Routes>
-            </main>
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'hsl(var(--card))',
-                  color: 'hsl(var(--card-foreground))',
-                  border: '1px solid hsl(var(--border))',
-                },
-              }}
-            />
-          </div>
-        </Router>
-      </IssueProvider>
+              </main>
+              <Toaster 
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: 'hsl(var(--card))',
+                    color: 'hsl(var(--card-foreground))',
+                    border: '1px solid hsl(var(--border))',
+                  },
+                }}
+              />
+            </div>
+          </Router>
+        </IssueProvider>
+      </NotificationProvider>
     </AuthProvider>
   )
 }

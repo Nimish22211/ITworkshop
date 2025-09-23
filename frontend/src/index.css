@@ -71,6 +71,11 @@
 }
 
 /* Custom marker styles */
+.custom-marker {
+  border: none !important;
+  background: none !important;
+}
+
 .issue-marker {
   border-radius: 50%;
   border: 2px solid white;
@@ -95,4 +100,45 @@
 
 .issue-marker.verified {
   background-color: #8b5cf6;
+}
+
+/* Cluster marker styles */
+.custom-cluster-icon {
+  border: none !important;
+  background: none !important;
+}
+
+.cluster-marker {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 3px solid white;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+
+.cluster-marker:hover {
+  transform: scale(1.1);
+}
+
+.cluster-marker.cluster-small {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.cluster-marker.cluster-medium {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.cluster-marker.cluster-large {
+  width: 50px;
+  height: 50px;
+  font-size: 16px;
 }
