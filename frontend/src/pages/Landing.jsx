@@ -7,13 +7,19 @@ import { Footer } from "../components/LandingPageComponents/Footer"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
+    <div id="home" className="min-h-screen bg-background">
       <Header />
       <main>
         <HeroSection />
-        <HowItWorks />
-        <TransparencySection />
-        <FAQSection />
+        <section id="how-it-works">
+          <HowItWorks />
+        </section>
+        <section id="transparency">
+          <TransparencySection />
+        </section>
+        <section id="faq">
+          <FAQSection />
+        </section>
       </main>
       <Footer />
     </div>

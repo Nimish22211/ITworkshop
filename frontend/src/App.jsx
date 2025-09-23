@@ -13,7 +13,7 @@ import Landing from './pages/Landing'
 import IssueDetailsPage from './pages/IssueDetailsPage'
 
 // Components
-import Header from './components/Common/Header'
+import {Header} from './components/LandingPageComponents/Header'
 import ProtectedRoute from './components/Common/ProtectedRoute'
 
 function App() {
@@ -25,8 +25,8 @@ function App() {
             <Header />
             <main>
               <Routes>
-                <Route path="/home" element={<Landing />} />
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/map" element={<HomePage />} />
                 <Route path="/report" element={<ReportIssuePage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />

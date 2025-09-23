@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { Button } from "../ui/button"
 // import { ThemeT  oggle } from "@/components/theme-toggle"
 
@@ -44,10 +45,15 @@ export function Header() {
 
         <div className="flex items-center space-x-4">
           {/* <ThemeToggle /> */}
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-            Login
+          <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Link to="/login">Login</Link>
           </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Register</Button>
+          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Link to="/register">Register</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/report">Report</Link>
+          </Button>
         </div>
       </div>
     </header>
