@@ -4,28 +4,15 @@ import { Button } from "../ui/button"
 import { useAuth } from "../../context/AuthContext"
 import NotificationCenter from "../Common/NotificationCenter"
 import { User, LogOut } from "lucide-react"
-// Simple dropdown implementation without Radix UI for now
-const DropdownMenu = ({ children }) => <div className="relative">{children}</div>
-const DropdownMenuTrigger = ({ children, asChild, ...props }) => 
-  asChild ? children : <button {...props}>{children}</button>
-const DropdownMenuContent = ({ children, align = "end" }) => (
-  <div className={`absolute top-full mt-2 ${align === 'end' ? 'right-0' : 'left-0'} 
-    min-w-[200px] bg-white border border-gray-200 rounded-md shadow-lg z-50`}>
-    {children}
-  </div>
-)
-const DropdownMenuItem = ({ children, asChild, ...props }) => 
-  asChild ? children : (
-    <div className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer" {...props}>
-      {children}
-    </div>
-  )
-const DropdownMenuLabel = ({ children }) => (
-  <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b border-gray-100">
-    {children}
-  </div>
-)
-const DropdownMenuSeparator = () => <div className="border-t border-gray-100 my-1" />
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu'
+
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -105,6 +92,11 @@ export function Header() {
                   {user.role === 'official' && (
                     <DropdownMenuItem asChild>
                       <Link to="/official/dashboard">Official Panel</Link>
+                    </DropdownMenuItem>
+                  )}
+                  {user.role === 'serviceman' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/serviceman/dashboard">Service Man Panel</Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />

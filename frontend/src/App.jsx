@@ -28,7 +28,7 @@ function App() {
           <Router>
             <div className="min-h-screen bg-background">
               <Header />
-              <main>
+              <main className='mt-16'>
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/map" element={<HomePage />} />
