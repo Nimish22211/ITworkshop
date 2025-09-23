@@ -115,8 +115,17 @@ router.post('/', [
 
     const issue = await issueModel.create(issueData);
     
-    // Emit real-time update
-    req.io.emit('new-issue', issue);
+    // Emit real-time update to all clients in issues room
+    req.io.to('issues').emit('issue-created', issue);
+    
+    // Send notification to admins and officials
+    req.io.to('admin-notifications').emit('notification', {
+      type: 'issue_created',
+      title: 'New Issue Reported',
+      message: `${issue.title} has been reported in ${issue.category}`,
+      issueId: issue.id,
+      userId: req.user.id
+    });
     
     res.status(201).json(issue);
   } catch (error) {
@@ -158,8 +167,23 @@ router.put('/:id/status', [
       return res.status(404).json({ error: 'Issue not found' });
     }
     
-    // Emit real-time update
-    req.io.emit('issue-updated', updatedIssue);
+    // Emit real-time update to all clients in issues room
+    req.io.to('issues').emit('issue-status-changed', {
+      issue: updatedIssue,
+      updatedBy: req.user.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Send notification to issue reporter
+    if (updatedIssue.reported_by) {
+      req.io.to(`user-${updatedIssue.reported_by}`).emit('notification', {
+        type: 'issue_status_changed',
+        title: 'Issue Status Updated',
+        message: `Your issue "${updatedIssue.title}" status changed to ${status}`,
+        issueId: updatedIssue.id,
+        userId: req.user.id
+      });
+    }
     
     res.json(updatedIssue);
   } catch (error) {
@@ -199,8 +223,40 @@ router.put('/:id/assign', [
       return res.status(404).json({ error: 'Issue not found' });
     }
     
-    // Emit real-time update
-    req.io.emit('issue-assigned', updatedIssue);
+    // Get assigned user info for the event
+    const User = require('../models/User');
+    const userModel = new User(req.db);
+    const assignedUser = await userModel.findById(assigned_to);
+    
+    // Emit real-time update to all clients in issues room
+    req.io.to('issues').emit('issue-assigned', {
+      issue: updatedIssue,
+      assignedTo: assignedUser ? assignedUser.name : 'Unknown',
+      assignedBy: req.user.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Send notification to assigned official
+    if (assignedUser) {
+      req.io.to(`user-${assigned_to}`).emit('notification', {
+        type: 'issue_assigned',
+        title: 'New Issue Assigned',
+        message: `You have been assigned to issue: "${updatedIssue.title}"`,
+        issueId: updatedIssue.id,
+        userId: req.user.id
+      });
+    }
+    
+    // Send notification to issue reporter
+    if (updatedIssue.reported_by) {
+      req.io.to(`user-${updatedIssue.reported_by}`).emit('notification', {
+        type: 'issue_assigned',
+        title: 'Issue Assigned',
+        message: `Your issue "${updatedIssue.title}" has been assigned to ${assignedUser ? assignedUser.name : 'an official'}`,
+        issueId: updatedIssue.id,
+        userId: req.user.id
+      });
+    }
     
     res.json(updatedIssue);
   } catch (error) {
