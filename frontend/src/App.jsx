@@ -11,6 +11,9 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import Landing from './pages/Landing'
 import IssueDetailsPage from './pages/IssueDetailsPage'
+import AdminDashboard from './pages/AdminDashboard'
+import OfficialDashboard from './pages/OfficialDashboard'
+import ServiceManDashboard from './pages/ServiceManDashboard'
 
 // Components
 import {Header} from './components/LandingPageComponents/Header'
@@ -38,6 +41,30 @@ function App() {
                       <DashboardPage />
                     </ProtectedRoute>
                   } 
+                />
+                <Route 
+                  path="/admin/dashboard" 
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route 
+                  path="/official/dashboard" 
+                  element={
+                    <ProtectedRoute requiredRole="official">
+                      <OfficialDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route 
+                  path="/serviceman/dashboard" 
+                  element={
+                    <ProtectedRoute requiredRole="serviceman">
+                      <ServiceManDashboard />
+                    </ProtectedRoute>
+                  }
                 />
               </Routes>
             </main>

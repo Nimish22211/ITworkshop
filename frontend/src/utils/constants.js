@@ -27,7 +27,8 @@ export const SEVERITY_LEVELS = [
 export const USER_ROLES = {
   CITIZEN: 'citizen',
   OFFICIAL: 'official',
-  ADMIN: 'admin'
+  ADMIN: 'admin',
+  SERVICE_MAN: 'serviceman'
 }
 
 export const DEPARTMENTS = [
