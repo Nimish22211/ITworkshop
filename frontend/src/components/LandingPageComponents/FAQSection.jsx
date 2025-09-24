@@ -1,5 +1,7 @@
 import { Button } from "../ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion"
+import {Link } from 'react-router-dom'
+
 
 export function FAQSection() {
   const faqs = [
@@ -52,7 +54,10 @@ export function FAQSection() {
 
         <div className="text-center mt-12">
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-3">
+            
+            <Link to="/report">
             Report Now
+            </Link>
           </Button>
         </div>
       </div>
