@@ -1,56 +1,57 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { MapPin, Eye, EyeOff } from 'lucide-react'
+import { MapPin, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login, loading } = useAuth()
-  
+  const { loginWithGoogle, loading } = useAuth()
+  const [params] = useSearchParams()
+  const pendingApproval = params.get('pending') === '1'
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [role, setRole] = useState('driver')
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleGoogle = async () => {
     setIsLoading(true)
-
-    try {
-      const result = await login(formData.email, formData.password)
-      if (result.success) {
-        navigate(result.redirectPath)
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-    } finally {
-      setIsLoading(false)
-    }
+    const result = await loginWithGoogle(role)
+    setIsLoading(false)
+    if (result.success) navigate(result.redirectPath)
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-20">
+    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
-            <MapPin className="h-12 w-12 text-blue-600" />
+            <MapPin className="h-12 w-12 text-primary" />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            Sign in
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Access the civic issues platform
+            Drivers and admins sign in with Google. Admins must approve drivers.
           </p>
+          {pendingApproval && (
+            <div className="mx-auto mt-3 flex max-w-sm items-center gap-2 rounded-md border bg-card p-2 text-left text-sm">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <span>Your driver access is pending admin approval.</span>
+            </div>
+          )}
         </div>
 
         <Card>
@@ -58,68 +59,32 @@ const LoginPage = () => {
             <CardTitle>Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-1">
-              <div>
-                <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="Enter your email"
-                />
+            <div className="space-y-3">
+              <div className="grid gap-2">
+                <Label htmlFor="role">Sign in as</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="driver">Driver</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="Enter your password"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
-                  </button>
-                </div>
+              <Button onClick={handleGoogle} className="w-full" disabled={isLoading || loading}>
+                {isLoading || loading ? 'Signing in...' : 'Sign in with Google'}
+              </Button>
+            </div>
+            <div className="mt-6 grid gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Admins can access Admin Panel directly after sign‑in.</span>
               </div>
-
-              <Button
-  type="submit"
-  className="w-full" 
-  disabled={isLoading || loading}
->
-  {isLoading || loading ? 'Signing in...' : 'Sign in'}
-</Button>
-
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  Sign up here
-                </Link>
-              </p>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Drivers must be approved by Admin before accessing Driver Console.</span>
+              </div>
             </div>
           </CardContent>
         </Card>

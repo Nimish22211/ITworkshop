@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
-import { apiService } from '../services/apiService'
 import toast from 'react-hot-toast'
+import { auth, googleProvider, signInWithPopup, onAuthStateChanged, signOut } from '../services/firebaseClient'
+import { apiService } from '../services/apiService'
 
 const AuthContext = createContext()
 
@@ -8,7 +9,9 @@ const initialState = {
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: false,
-  loading: true
+  loading: true,
+  role: null,
+  approved: false,
 }
 
 const authReducer = (state, action) => {
@@ -21,7 +24,9 @@ const authReducer = (state, action) => {
         user: action.payload.user,
         token: action.payload.token,
         isAuthenticated: true,
-        loading: false
+        loading: false,
+        role: action.payload.role || null,
+        approved: Boolean(action.payload.approved),
       }
     case 'LOGIN_FAILURE':
       return {
@@ -29,7 +34,9 @@ const authReducer = (state, action) => {
         user: null,
         token: null,
         isAuthenticated: false,
-        loading: false
+        loading: false,
+        role: null,
+        approved: false,
       }
     case 'LOGOUT':
       return {
@@ -37,7 +44,9 @@ const authReducer = (state, action) => {
         user: null,
         token: null,
         isAuthenticated: false,
-        loading: false
+        loading: false,
+        role: null,
+        approved: false,
       }
     case 'UPDATE_USER':
       return {
@@ -52,104 +61,76 @@ const authReducer = (state, action) => {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
-  // Check if user is logged in on app start
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        try {
-          const response = await apiService.get('/auth/me')
-          dispatch({
-            type: 'LOGIN_SUCCESS',
-            payload: {
-              user: response.data.user,
-              token
-            }
-          })
-        } catch (error) {
-          localStorage.removeItem('token')
-          dispatch({ type: 'LOGIN_FAILURE' })
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const token = await firebaseUser.getIdToken(true)
+        const decoded = await firebaseUser.getIdTokenResult(true)
+        localStorage.setItem('token', token)
+        const mappedUser = {
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName || firebaseUser.email,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
         }
+        const role = decoded.claims?.role || 'student'
+        const approved = Boolean(decoded.claims?.approved)
+        dispatch({ type: 'LOGIN_SUCCESS', payload: { user: mappedUser, token, role, approved } })
       } else {
+        localStorage.removeItem('token')
         dispatch({ type: 'LOGIN_FAILURE' })
       }
-    }
-
-    checkAuth()
+    })
+    return () => unsubscribe()
   }, [])
 
-  const login = async (email, password) => {
+  const loginWithGoogle = async (selectedRole = 'driver') => {
     try {
       dispatch({ type: 'LOGIN_START' })
-      const response = await apiService.post('/auth/login', { email, password })
-      
-      const { user, token } = response.data
+      const result = await signInWithPopup(auth, googleProvider)
+      const token = await result.user.getIdToken(true)
+      const decoded = await result.user.getIdTokenResult(true)
+      const user = {
+        uid: result.user.uid,
+        name: result.user.displayName || result.user.email,
+        email: result.user.email,
+        photoURL: result.user.photoURL,
+      }
       localStorage.setItem('token', token)
+      // Ensure user exists in backend (will also set claims on first login)
+      try {
+        await apiService.post('/admin/users/ensure', { role: selectedRole })
+      } catch (e) {
+        console.error('ensure user failed', e)
+      }
 
-      console.log("user data : ", user, token)
-      
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: { user, token }
-      })
-      
+      // Re-fetch token to get potential updated claims
+      const freshToken = await result.user.getIdToken(true)
+      const freshDecoded = await result.user.getIdTokenResult(true)
+      localStorage.setItem('token', freshToken)
+      const role = freshDecoded.claims?.role || selectedRole || 'student'
+      const approved = Boolean(freshDecoded.claims?.approved)
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: freshToken, role, approved } })
       toast.success('Login successful!')
-      let redirectPath = '/dashboard'; // Default for citizen
-      if (user.role === 'admin') {
-        redirectPath = '/admin/dashboard';
-      } else if (user.role === 'official') {
-        redirectPath = '/official/dashboard';
-      } else if (user.role === 'serviceman') {
-        redirectPath = '/serviceman/dashboard';
-      }
-      return { success: true, redirectPath };
+      let redirectPath = '/map'
+      if (role === 'admin') redirectPath = '/admin'
+      else if (role === 'driver') redirectPath = '/driver'
+      return { success: true, redirectPath }
     } catch (error) {
       dispatch({ type: 'LOGIN_FAILURE' })
-      const message = error.response?.data?.error || 'Login failed'
-      toast.error(message)
-      return { success: false, error: message }
+      toast.error('Login failed')
+      return { success: false, error: 'Login failed' }
     }
   }
 
-  const register = async (userData) => {
-    try {
-      dispatch({ type: 'LOGIN_START' })
-      console.log("user data : ", userData)
-      const response = await apiService.post('/auth/register', userData)
-      if (response?.error) {
-        throw new Error(response.details[0].msg)
-      }
-      const { user, token } = response.data
-      localStorage.setItem('token', token)
-      
-      dispatch({
-        type: 'LOGIN_SUCCESS',
-        payload: { user, token }
-      })
-      
-      toast.success('Registration successful!')
-      let redirectPath = '/dashboard'; // Default for citizen
-      if (user.role === 'admin') {
-        redirectPath = '/admin/dashboard';
-      } else if (user.role === 'official') {
-        redirectPath = '/official/dashboard';
-      } else if (user.role === 'serviceman') {
-        redirectPath = '/serviceman/dashboard';
-      }
-      return { success: true, redirectPath };
-    } catch (error) {
-      dispatch({ type: 'LOGIN_FAILURE' })
-      const message = error.response?.data?.error || 'Registration failed'
-      toast.error(message)
-      return { success: false, error: message }
-    }
-  }
-
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth)
     localStorage.removeItem('token')
     dispatch({ type: 'LOGOUT' })
     toast.success('Logged out successfully')
   }
+
+
 
   const updateUser = (userData) => {
     dispatch({
@@ -160,8 +141,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     ...state,
-    login,
-    register,
+    loginWithGoogle,
     logout,
     updateUser
   }
