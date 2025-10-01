@@ -7,16 +7,17 @@ const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const dotenv = require('dotenv');
-const { Pool } = require('pg');
+const admin = require('./services/firebaseAdmin');
+const { getFirestore } = require('firebase-admin/firestore');
 
 // Load environment variables
 dotenv.config();
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
-const issueRoutes = require('./routes/issueRoutes');
-const userRoutes = require('./routes/userRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
+// New bus-tracker routes
+const driverRoutes = require('./routes/driverRoutes');
+const busRoutes = require('./routes/busRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const server = createServer(app);
@@ -26,7 +27,7 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "http://localhost:5174", 
+      "http://localhost:5174",
       "http://localhost:3000",
       process.env.FRONTEND_URL
     ].filter(Boolean),
@@ -35,44 +36,39 @@ const io = new Server(server, {
   }
 });
 
-// PostgreSQL connection pool (Render PostgreSQL)
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  },
-  // Connection pool settings optimized for Render
-  max: 10, // Reduced for free tier
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Increased timeout
-  acquireTimeoutMillis: 60000, // Added acquire timeout
-  createTimeoutMillis: 30000, // Added create timeout
-  destroyTimeoutMillis: 5000,
-  reapIntervalMillis: 1000,
-  createRetryIntervalMillis: 200,
-});
+// Initialize Firestore
+const db = getFirestore();
+console.log('✅ Connected to Firebase Firestore');
 
-// Test database connection with retry logic
-const testConnection = async (retries = 3) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const client = await pool.connect();
-      console.log('✅ Connected to Render PostgreSQL database');
-      client.release();
-      return;
-    } catch (err) {
-      console.error(`❌ Database connection attempt ${i + 1} failed:`, err.message);
-      if (i === retries - 1) {
-        console.error('❌ All database connection attempts failed');
-      } else {
-        console.log('🔄 Retrying database connection in 2 seconds...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
-  }
-};
+// In-memory mock buses for testing (Ludhiana, Punjab, India)
+const mockBuses = [
+  { id: 'LUD-101', location: { lat: 30.9010, lng: 75.8573 }, heading: 0, speed: 20, active: true },
+  { id: 'LUD-202', location: { lat: 30.8898, lng: 75.8190 }, heading: 180, speed: 18, active: true },
+  { id: 'LUD-303', location: { lat: 30.9272, lng: 75.8645 }, heading: 90, speed: 22, active: true },
+];
+app.locals.mockBuses = mockBuses;
 
-testConnection();
+// Helper to keep positions within Ludhiana bounds
+const LUDHIANA_BOUNDS = { latMin: 30.85, latMax: 30.95, lngMin: 75.78, lngMax: 75.93 };
+function clampLudhiana(lat, lng) {
+  const clampedLat = Math.min(Math.max(lat, LUDHIANA_BOUNDS.latMin), LUDHIANA_BOUNDS.latMax);
+  const clampedLng = Math.min(Math.max(lng, LUDHIANA_BOUNDS.lngMin), LUDHIANA_BOUNDS.lngMax);
+  return { lat: clampedLat, lng: clampedLng };
+}
+
+// Simulate movement and broadcast every 2 seconds
+setInterval(() => {
+  mockBuses.forEach((bus) => {
+    const deltaLat = (Math.random() - 0.5) * 0.0015; // ~0.15 km
+    const deltaLng = (Math.random() - 0.5) * 0.0015;
+    const next = clampLudhiana(bus.location.lat + deltaLat, bus.location.lng + deltaLng);
+    bus.location = next;
+    bus.heading = (bus.heading + Math.floor(Math.random() * 40) - 20 + 360) % 360;
+    bus.speed = 15 + Math.random() * 15;
+    const payload = { id: bus.id, active: true, location: bus.location, heading: bus.heading, speed: Math.round(bus.speed), updatedAt: new Date().toISOString() };
+    io.emit('bus-location', payload);
+  });
+}, 2000);
 
 // Security middleware
 app.use(helmet({
@@ -101,7 +97,7 @@ app.use(limiter);
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "http://localhost:5174", 
+    "http://localhost:5174",
     "http://localhost:3000",
     process.env.FRONTEND_URL
   ].filter(Boolean),
@@ -120,43 +116,42 @@ app.use(compression());
 // Logging middleware
 app.use(morgan('combined'));
 
-// Make database pool and Socket.IO accessible to routes
+// Make Firestore and Socket.IO accessible to routes
 app.use((req, res, next) => {
-  req.db = pool;
+  req.db = db;
   req.io = io;
   next();
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    database: 'connected',
+    database: 'firestore',
     environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/issues', issueRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/upload', uploadRoutes);
+// API Routes for bus tracker
+app.use('/api/driver', driverRoutes);
+app.use('/api/buses', busRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
-  
+
   socket.on('join-room', (room) => {
     socket.join(room);
     console.log(`User ${socket.id} joined room: ${room}`);
   });
-  
+
   socket.on('leave-room', (room) => {
     socket.leave(room);
     console.log(`User ${socket.id} left room: ${room}`);
   });
-  
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
@@ -166,8 +161,8 @@ io.on('connection', (socket) => {
 app.use((error, req, res, next) => {
   console.error('Server Error:', error);
   res.status(error.status || 500).json({
-    error: process.env.NODE_ENV === 'production' 
-      ? 'Internal Server Error' 
+    error: process.env.NODE_ENV === 'production'
+      ? 'Internal Server Error'
       : error.message
   });
 });
@@ -182,14 +177,13 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️  Database: Render PostgreSQL`);
+  console.log(`🗄️  Database: Firebase Firestore`);
   console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL || "http://localhost:5173"}`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('⏳ Shutting down gracefully...');
-  await pool.end();
   server.close(() => {
     console.log('✅ Server closed');
     process.exit(0);
@@ -198,7 +192,6 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   console.log('⏳ SIGTERM received, shutting down gracefully...');
-  await pool.end();
   server.close(() => {
     console.log('✅ Server closed');
     process.exit(0);
