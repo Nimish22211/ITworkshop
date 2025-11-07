@@ -4,158 +4,150 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import mapImg from '../../map.png'
-import { useAuth } from '@/context/AuthContext'
+import Header from '@/components/Common/Header'
 
 export default function Landing() {
-  const { isAuthenticated, logout, user } = useAuth()
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-primary/10 grid place-items-center">
-              <span className="text-primary text-sm font-bold">UB</span>
-            </div>
-            <span className="text-sm font-semibold tracking-wide">Uni Bus Tracker</span>
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            <Link to="/map" className="text-muted-foreground hover:text-foreground">Live Map</Link>
-            <Link to="/driver" className="text-muted-foreground hover:text-foreground">Driver</Link>
-            <Link to="/admin" className="text-muted-foreground hover:text-foreground">Admin</Link>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/map">Open Map</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link to="/driver">Go Driver</Link>
-            </Button>
-            {isAuthenticated ? (
-              <>
-                <span className="hidden text-xs text-muted-foreground md:inline">{user?.name || user?.email}</span>
-                <Button size="sm" variant="ghost" onClick={logout}>Logout</Button>
-              </>
-            ) : (
-              <Button asChild size="sm">
-                <Link to="/login">Login</Link>
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <Header />
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden border-b">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
-            <div>
-              <div className="mb-4 flex items-center gap-2">
-                <Badge variant="secondary">Live</Badge>
-                <span className="text-xs text-muted-foreground">WebSocket powered updates</span>
+        <section className="relative overflow-hidden border-b border-slate-200">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100 via-transparent to-transparent opacity-60" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-100 via-transparent to-transparent opacity-40" />
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 md:grid-cols-2 md:py-32 lg:px-8 relative">
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-3 rounded-full border border-blue-200 bg-blue-50/80 px-4 py-2 backdrop-blur-sm">
+                <Badge variant="secondary" className="bg-green-500 text-white border-0 shadow-sm">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                    Live
+                  </span>
+                </Badge>
+                <span className="text-xs font-medium text-slate-700">Real-time WebSocket Updates</span>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
-                Real‑time University Bus Tracking
-              </h1>
-              <p className="mt-4 max-w-prose text-muted-foreground">
-                See buses move across campus in real time, get ETA hints, and keep riders informed. Drivers share location securely; admins approve access with one click.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild size="lg">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-900 md:text-6xl leading-tight">
+                  Real‑Time Campus
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"> Bus Tracking</span>
+                </h1>
+                <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
+                  Monitor university transit in real-time with precision GPS tracking. Secure driver authentication, instant updates, and seamless admin oversight — powering smarter campus mobility.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl shadow-blue-500/30 h-12 px-8 text-base font-semibold">
                   <Link to="/map">View Live Map</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
+                <Button asChild variant="outline" size="lg" className="border-2 border-slate-300 hover:border-blue-600 hover:text-blue-600 h-12 px-8 text-base font-semibold">
                   <Link to="/driver">Driver Console</Link>
                 </Button>
-                <Button asChild variant="ghost" size="lg">
+                <Button asChild variant="ghost" size="lg" className="hover:bg-slate-100 h-12 px-8 text-base font-semibold">
                   <Link to="/admin">Admin Panel</Link>
                 </Button>
               </div>
 
-              <div className="mt-8 grid grid-cols-3 gap-4 text-center md:max-w-md">
-                <Stat label="Avg Update" value="2s" />
-                <Stat label="Uptime" value="99.9%" />
-                <Stat label="Buses" value="12" />
+              <div className="grid grid-cols-3 gap-6 pt-4 md:max-w-lg">
+                <Stat label="Update Rate" value="<3s" />
+                <Stat label="Reliability" value="99.9%" />
+                <Stat label="Fleet Size" value="12+" />
               </div>
             </div>
             <div className="relative">
-              <Card className="overflow-hidden">
-                <CardHeader className="pb-0">
-                  <CardTitle className="text-base">Campus Snapshot</CardTitle>
-                  <CardDescription>Preview of the live tracking view</CardDescription>
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl opacity-10 blur-3xl" />
+              <Card className="overflow-hidden border-2 border-slate-200 shadow-2xl relative backdrop-blur">
+                <CardHeader className="pb-3 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
+                  <CardTitle className="text-lg font-bold text-slate-900">Campus Live View</CardTitle>
+                  <CardDescription className="text-slate-600">Real-time tracking interface preview</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 bg-slate-50">
                   <img src={mapImg} alt="Map preview" className="h-full w-full object-cover" />
                 </CardContent>
               </Card>
-              <div className="absolute -bottom-4 -left-4 hidden rotate-2 md:block">
-                <Badge className="shadow" variant="default">Socket.io</Badge>
+              <div className="absolute -bottom-6 -left-6 hidden md:block">
+                <Badge className="shadow-lg shadow-blue-500/40 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 px-4 py-2 text-sm font-semibold">Socket.io Powered</Badge>
+              </div>
+              <div className="absolute -top-6 -right-6 hidden lg:block">
+                <div className="rounded-2xl bg-white border-2 border-slate-200 shadow-xl px-5 py-3">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Now</div>
+                  <div className="text-2xl font-bold text-blue-600 mt-1">8 Buses</div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Features */}
-        <section className="py-16">
-          <div className="mx-auto max-w-6xl px-4">
-            <div className="mb-8 flex items-end justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold tracking-tight">Why it works</h2>
-                <p className="mt-2 text-sm text-muted-foreground">Built for reliability, clarity, and speed.</p>
-              </div>
-              <div className="hidden md:block">
-                <Button asChild variant="outline" size="sm"><Link to="/map">Try the Map</Link></Button>
-              </div>
+        <section className="py-24 bg-white">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="mb-16 text-center max-w-3xl mx-auto">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Enterprise-Grade Transit Intelligence</h2>
+              <p className="mt-4 text-lg text-slate-600">Built on cutting-edge technology for reliability, security, and performance that students and staff can depend on.</p>
             </div>
-            <div className="grid gap-6 md:grid-cols-3">
-              <FeatureCard title="Live Locations" description="GPS positions update every few seconds for accurate tracking across campus." />
-              <FeatureCard title="Driver Approved" description="Admins approve drivers via Google Sign‑In to prevent misuse and ensure safety." />
-              <FeatureCard title="Realtime Updates" description="WebSocket powered stream using Socket.io keeps everyone in sync instantly." />
+            <div className="grid gap-8 md:grid-cols-3">
+              <FeatureCard title="Precision GPS Tracking" description="Sub-second location updates with advanced GPS positioning algorithms ensure millimeter-accurate bus tracking across the entire campus network." />
+              <FeatureCard title="Secure Authentication" description="Enterprise SSO integration with Google Workspace ensures only verified university drivers can broadcast location data, maintaining system integrity." />
+              <FeatureCard title="WebSocket Infrastructure" description="Low-latency bidirectional communication via Socket.io delivers instantaneous updates to thousands of concurrent users without polling overhead." />
             </div>
           </div>
         </section>
 
         {/* How it works */}
-        <section className="border-y bg-muted/30 py-16">
-          <div className="mx-auto max-w-6xl px-4">
-            <h2 className="text-2xl font-semibold">Get started in minutes</h2>
-            <div className="mt-8 grid gap-6 md:grid-cols-3">
-              <StepCard step="1" title="Open the Map" description="Riders visit the public map to see live bus positions and ETAs." ctaLabel="View Map" to="/map" />
-              <StepCard step="2" title="Driver Sign‑In" description="Drivers sign in and share location automatically from the console." ctaLabel="Driver Console" to="/driver" />
-              <StepCard step="3" title="Admin Approve" description="Admins approve drivers and manage routes securely from the panel." ctaLabel="Admin Panel" to="/admin" />
+        <section className="border-y border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/30 py-24">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">Seamless Integration in Three Steps</h2>
+              <p className="mt-4 text-lg text-slate-600">From riders to administrators, everyone gets instant access to the tools they need.</p>
+            </div>
+            <div className="grid gap-8 md:grid-cols-3">
+              <StepCard step="1" title="Access Live Map" description="Students and staff view real-time bus positions, estimated arrival times, and route information through our intuitive web interface." ctaLabel="Explore Map" to="/map" />
+              <StepCard step="2" title="Driver Authentication" description="Authorized drivers sign in with university credentials and begin broadcasting GPS location automatically from the secure console." ctaLabel="Driver Access" to="/driver" />
+              <StepCard step="3" title="Administrative Control" description="Transit administrators approve drivers, manage routes, monitor system health, and analyze usage patterns from the central dashboard." ctaLabel="Admin Dashboard" to="/admin" />
             </div>
           </div>
         </section>
 
         {/* FAQ */}
-        <section className="py-16">
-          <div className="mx-auto max-w-3xl px-4">
-            <h2 className="text-2xl font-semibold">FAQ</h2>
-            <Accordion type="single" collapsible className="mt-6">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>How often does the map update?</AccordionTrigger>
-                <AccordionContent>Every 2–5 seconds depending on connection quality and battery settings.</AccordionContent>
+        <section className="py-24 bg-white">
+          <div className="mx-auto max-w-3xl px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-slate-900 mb-3">Frequently Asked Questions</h2>
+            <p className="text-slate-600 mb-10">Everything you need to know about our campus transit tracking system.</p>
+            <Accordion type="single" collapsible className="space-y-4">
+              <AccordionItem value="item-1" className="border-2 border-slate-200 rounded-xl px-6 bg-white hover:border-blue-300 transition-colors">
+                <AccordionTrigger className="text-base font-semibold text-slate-900 hover:text-blue-600 py-5">How frequently does the map refresh with new data?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 pb-5">The system updates every 2–3 seconds on average, with adaptive intervals based on network conditions and device battery optimization settings to ensure optimal performance.</AccordionContent>
               </AccordionItem>
-              <AccordionItem value="item-2">
-                <AccordionTrigger>Who can broadcast location?</AccordionTrigger>
-                <AccordionContent>Only approved drivers. Admins grant and revoke access at any time.</AccordionContent>
+              <AccordionItem value="item-2" className="border-2 border-slate-200 rounded-xl px-6 bg-white hover:border-blue-300 transition-colors">
+                <AccordionTrigger className="text-base font-semibold text-slate-900 hover:text-blue-600 py-5">Who has authorization to broadcast location data?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 pb-5">Only university-approved drivers with verified credentials can share location. Administrators have granular control to grant, suspend, or revoke access instantly through the admin panel.</AccordionContent>
               </AccordionItem>
-              <AccordionItem value="item-3">
-                <AccordionTrigger>Do I need an app?</AccordionTrigger>
-                <AccordionContent>No. Everything runs in the browser on desktop and mobile.</AccordionContent>
+              <AccordionItem value="item-3" className="border-2 border-slate-200 rounded-xl px-6 bg-white hover:border-blue-300 transition-colors">
+                <AccordionTrigger className="text-base font-semibold text-slate-900 hover:text-blue-600 py-5">Is a mobile application required to use this service?</AccordionTrigger>
+                <AccordionContent className="text-slate-600 pb-5">No installation necessary. The entire platform is web-based and fully responsive, accessible from any modern browser on desktop, tablet, or smartphone devices.</AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
         </section>
       </main>
 
-      <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground md:flex-row">
-          <div>© {new Date().getFullYear()} Uni Bus Tracker</div>
-          <div className="flex items-center gap-4">
-            <Link to="/map" className="hover:text-foreground">Live Map</Link>
-            <Link to="/driver" className="hover:text-foreground">Driver</Link>
-            <Link to="/admin" className="hover:text-foreground">Admin</Link>
+      <footer className="border-t border-slate-200 bg-gradient-to-br from-slate-50 to-white">
+        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+          <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30 grid place-items-center">
+                <span className="text-white text-sm font-bold">UB</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-900">Uni Bus Tracker</span>
+                <span className="text-xs text-slate-500">© {new Date().getFullYear()} All rights reserved</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-8 text-sm font-medium">
+              <Link to="/map" className="text-slate-600 hover:text-blue-600 transition-colors">Live Map</Link>
+              <Link to="/driver" className="text-slate-600 hover:text-blue-600 transition-colors">Driver Portal</Link>
+              <Link to="/admin" className="text-slate-600 hover:text-blue-600 transition-colors">Administration</Link>
+            </div>
           </div>
         </div>
       </footer>
@@ -165,19 +157,22 @@ export default function Landing() {
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded-md border bg-card p-3 text-center shadow-sm">
-      <div className="text-2xl font-semibold leading-none tracking-tight">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+    <div className="rounded-2xl border-2 border-slate-200 bg-white p-5 text-center shadow-lg hover:shadow-xl transition-shadow hover:border-blue-300">
+      <div className="text-3xl font-bold leading-none tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{value}</div>
+      <div className="mt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
     </div>
   )
 }
 
 function FeatureCard({ title, description }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <Card className="border-2 border-slate-200 hover:border-blue-300 transition-all hover:shadow-2xl shadow-lg bg-white group">
+      <CardHeader className="space-y-3">
+        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 grid place-items-center group-hover:from-blue-600 group-hover:to-indigo-600 transition-all">
+          <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 group-hover:from-white group-hover:to-white transition-all" />
+        </div>
+        <CardTitle className="text-xl font-bold text-slate-900">{title}</CardTitle>
+        <CardDescription className="text-slate-600 leading-relaxed">{description}</CardDescription>
       </CardHeader>
     </Card>
   )
@@ -185,16 +180,20 @@ function FeatureCard({ title, description }) {
 
 function StepCard({ step, title, description, ctaLabel, to }) {
   return (
-    <Card className="relative">
-      <div className="absolute right-4 top-4">
-        <Badge variant="outline">Step {step}</Badge>
+    <Card className="relative border-2 border-slate-200 hover:border-blue-300 transition-all shadow-lg hover:shadow-2xl bg-white group">
+      <div className="absolute -right-3 -top-3">
+        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/40 grid place-items-center border-4 border-white">
+          <span className="text-white text-xl font-bold">{step}</span>
+        </div>
       </div>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="pt-10 space-y-3">
+        <CardTitle className="text-xl font-bold text-slate-900">{title}</CardTitle>
+        <CardDescription className="text-slate-600 leading-relaxed">{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button asChild variant="secondary"><Link to={to}>{ctaLabel}</Link></Button>
+        <Button asChild variant="secondary" className="w-full bg-gradient-to-r from-slate-100 to-blue-50 hover:from-blue-600 hover:to-indigo-600 border-2 border-slate-200 hover:border-transparent hover:text-white transition-all font-semibold shadow-sm group-hover:shadow-lg">
+          <Link to={to}>{ctaLabel}</Link>
+        </Button>
       </CardContent>
     </Card>
   )

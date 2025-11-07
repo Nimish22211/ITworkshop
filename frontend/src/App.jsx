@@ -21,7 +21,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/map" element={<PublicMap />} />
-                <Route path="/driver" element={<ProtectedRoute roles={["driver", "admin"]}><DriverDashboard /></ProtectedRoute>} />
+                <Route path="/driver" element={<ProtectedRoute roles={["driver"]}><DriverDashboard /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><Admin /></ProtectedRoute>} />
                 <Route path="/login" element={<LoginRouteGuard />} />
               </Routes>
