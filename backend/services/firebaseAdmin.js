@@ -38,13 +38,26 @@ if (!admin.apps.length) {
             console.log('✅ Firebase Admin initialized using SERVICE_FILE JSON');
         } else {
             // Try to read local service account JSON if env vars are missing
-            const guessPath = path.resolve(__dirname, '..', 'realtime-transport-test-firebase-adminsdk-fbsvc-7c69dff382.json');
-            if (fs.existsSync(guessPath)) {
-                const serviceAccount = JSON.parse(fs.readFileSync(guessPath, 'utf-8'));
+            // Check for both possible file names
+            const possiblePaths = [
+                path.resolve(__dirname, '..', 'realtime-transport-test-firebase-adminsdk-fbsvc-bd88071b6e.json'),
+                path.resolve(__dirname, '..', 'realtime-transport-test-firebase-adminsdk-fbsvc-7c69dff382.json'),
+            ];
+
+            let serviceAccountPath = null;
+            for (const filePath of possiblePaths) {
+                if (fs.existsSync(filePath)) {
+                    serviceAccountPath = filePath;
+                    break;
+                }
+            }
+
+            if (serviceAccountPath) {
+                const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf-8'));
                 admin.initializeApp({
                     credential: admin.credential.cert(serviceAccount)
                 });
-                console.log('✅ Firebase Admin initialized with local service account JSON');
+                console.log('✅ Firebase Admin initialized with local service account JSON:', path.basename(serviceAccountPath));
             } else {
                 console.warn('⚠️ Firebase Admin service account not set. Falling back to Application Default Credentials.');
                 admin.initializeApp();

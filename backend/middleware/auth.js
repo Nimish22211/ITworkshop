@@ -9,7 +9,8 @@ const auth = async (req, res, next) => {
     }
 
     const decodedToken = await admin.auth().verifyIdToken(token, true);
-    const customRole = decodedToken.role ?? decodedToken.claims?.role;
+    // Custom claims are in decodedToken, not decodedToken.claims for verifyIdToken
+    const customRole = decodedToken.role || decodedToken.claims?.role;
     const isGoogle = decodedToken.firebase?.sign_in_provider === 'google.com';
     const derivedRole = customRole || (isGoogle ? 'driver' : 'student');
     const approved = decodedToken.approved ?? decodedToken.claims?.approved ?? false;
@@ -52,7 +53,8 @@ const optionalAuth = async (req, res, next) => {
     if (token) {
       try {
         const decodedToken = await admin.auth().verifyIdToken(token, true);
-        const customRole = decodedToken.role ?? decodedToken.claims?.role;
+        // Custom claims are in decodedToken, not decodedToken.claims for verifyIdToken
+        const customRole = decodedToken.role || decodedToken.claims?.role;
         const derivedRole = customRole || 'student';
         const approved = decodedToken.approved ?? decodedToken.claims?.approved ?? false;
         req.user = {
