@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input'
 import { Badge } from '../components/ui/badge'
 import { useAuth } from '../context/AuthContext'
 import { Shield, UserCheck } from 'lucide-react'
+import Header from '../components/Common/Header'
 
 export default function Admin() {
     const { role } = useAuth()
@@ -23,31 +24,34 @@ export default function Admin() {
     }
 
     return (
-        <div className="mx-auto max-w-3xl p-4">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <div className="flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-primary" />
-                        <CardTitle className="text-base">Admin Panel</CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant="secondary">Secure</Badge>
-                        <Badge>{role || 'unknown'}</Badge>
-                    </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <label className="mb-1 block text-xs text-muted-foreground">Driver UID</label>
-                        <Input value={uid} onChange={e => setUid(e.target.value)} placeholder="Enter Firebase UID" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button onClick={approve}>
-                            <UserCheck className="mr-2 h-4 w-4" /> Approve Driver
-                        </Button>
-                    </div>
-                    {status && <div className="text-sm text-muted-foreground">{status}</div>}
-                </CardContent>
-            </Card>
+        <div className="min-h-screen bg-background">
+            <Header />
+            <div className="mx-auto max-w-3xl p-4 pt-8">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <div className="flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-primary" />
+                            <CardTitle className="text-base">Admin Panel</CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary">Secure</Badge>
+                            <Badge>{role || 'unknown'}</Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <label className="mb-1 block text-xs text-muted-foreground">Driver UID</label>
+                            <Input value={uid} onChange={e => setUid(e.target.value)} placeholder="Enter Firebase UID" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={approve}>
+                                <UserCheck className="mr-2 h-4 w-4" /> Approve Driver
+                            </Button>
+                        </div>
+                        {status && <div className="text-sm text-muted-foreground">{status}</div>}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }

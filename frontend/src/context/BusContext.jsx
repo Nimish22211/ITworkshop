@@ -49,8 +49,9 @@ export const BusProvider = ({ children }) => {
         socket.on('bus-location', (bus) => {
             dispatch({ type: 'UPSERT_BUS', payload: bus })
         })
-        socket.on('bus-status', ({ id, active }) => {
-            dispatch({ type: 'UPSERT_BUS', payload: { id, active } })
+        socket.on('bus-status', (bus) => {
+            // Handle both old format { id, active } and new format with full bus object
+            dispatch({ type: 'UPSERT_BUS', payload: bus })
         })
         return () => {
             socket.off('bus-location')
