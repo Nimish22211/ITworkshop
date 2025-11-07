@@ -37,11 +37,62 @@ const io = new Server(server, {
 });
 
 // Initialize Firestore
-const db = getFirestore();
-console.log('✅ Connected to Firebase Firestore');
+let db;
+try {
+  db = getFirestore();
+  console.log('✅ Connected to Firebase Firestore');
+} catch (error) {
+  console.error('❌ Failed to initialize Firestore:', error);
+  throw error;
+}
+
+// Predefined route coordinates for demo bus
+const DEMO_BUS_ROUTE = [
+  { lat: 30.868346980422736, lng: 75.75585069973738 },
+  { lat: 30.869084436177864, lng: 75.75529763051816 },
+  { lat: 30.87057426594907, lng: 75.75441759899812 },
+  { lat: 30.872589528800656, lng: 75.75318624763204 },
+  { lat: 30.8738255361231, lng: 75.75242100095159 },
+  { lat: 30.874673412972168, lng: 75.7549010973013 },
+  { lat: 30.87499883328986, lng: 75.7560733180434 },
+  { lat: 30.876401990928084, lng: 75.76030652075038 },
+  { lat: 30.878393106885316, lng: 75.76568544085369 },
+];
+
+// Helper function to calculate heading between two points
+function calculateHeading(from, to) {
+  const lat1 = from.lat * Math.PI / 180;
+  const lat2 = to.lat * Math.PI / 180;
+  const deltaLng = (to.lng - from.lng) * Math.PI / 180;
+  const x = Math.sin(deltaLng) * Math.cos(lat2);
+  const y = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+  const heading = Math.atan2(x, y) * 180 / Math.PI;
+  return (heading + 360) % 360;
+}
+
+// Helper function to calculate distance between two points (in km)
+function calculateDistance(from, to) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (to.lat - from.lat) * Math.PI / 180;
+  const dLng = (to.lng - from.lng) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(from.lat * Math.PI / 180) * Math.cos(to.lat * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 // In-memory mock buses for testing (Ludhiana, Punjab, India)
 const mockBuses = [
+  {
+    id: 'DEMO-001',
+    location: DEMO_BUS_ROUTE[0],
+    heading: 0,
+    speed: 25,
+    active: true,
+    routeIndex: 0, // Track current position in route
+    routeProgress: 0 // Progress between current and next waypoint (0-1)
+  },
   { id: 'LUD-101', location: { lat: 30.9010, lng: 75.8573 }, heading: 0, speed: 20, active: true },
   { id: 'LUD-202', location: { lat: 30.8898, lng: 75.8190 }, heading: 180, speed: 18, active: true },
   { id: 'LUD-303', location: { lat: 30.9272, lng: 75.8645 }, heading: 90, speed: 22, active: true },
@@ -59,13 +110,62 @@ function clampLudhiana(lat, lng) {
 // Simulate movement and broadcast every 2 seconds
 setInterval(() => {
   mockBuses.forEach((bus) => {
-    const deltaLat = (Math.random() - 0.5) * 0.0015; // ~0.15 km
-    const deltaLng = (Math.random() - 0.5) * 0.0015;
-    const next = clampLudhiana(bus.location.lat + deltaLat, bus.location.lng + deltaLng);
-    bus.location = next;
-    bus.heading = (bus.heading + Math.floor(Math.random() * 40) - 20 + 360) % 360;
-    bus.speed = 15 + Math.random() * 15;
-    const payload = { id: bus.id, active: true, location: bus.location, heading: bus.heading, speed: Math.round(bus.speed), updatedAt: new Date().toISOString() };
+    if (bus.id === 'DEMO-001' && bus.routeIndex !== undefined) {
+      // Demo bus follows predefined route
+      const currentWaypoint = DEMO_BUS_ROUTE[bus.routeIndex];
+      const isLastWaypoint = bus.routeIndex === DEMO_BUS_ROUTE.length - 1;
+      const nextWaypointIndex = isLastWaypoint ? 0 : bus.routeIndex + 1;
+      const nextWaypoint = DEMO_BUS_ROUTE[nextWaypointIndex];
+
+      // Calculate distance and move along route
+      const distance = calculateDistance(currentWaypoint, nextWaypoint);
+      const speedKmPerSecond = bus.speed / 3600; // Convert km/h to km/s
+      const distancePerUpdate = speedKmPerSecond * 2; // Distance moved in 2 seconds
+
+      // Update progress along current segment
+      bus.routeProgress += distancePerUpdate / distance;
+
+      if (bus.routeProgress >= 1) {
+        // Reached next waypoint
+        if (isLastWaypoint) {
+          // If at last waypoint, immediately teleport to starting coordinate
+          bus.routeIndex = 0;
+          bus.routeProgress = 0;
+          bus.location = { ...DEMO_BUS_ROUTE[0] };
+        } else {
+          // Move to next segment
+          bus.routeIndex = nextWaypointIndex;
+          bus.routeProgress = 0;
+          bus.location = { ...nextWaypoint };
+        }
+      } else {
+        // Interpolate position between waypoints
+        bus.location = {
+          lat: currentWaypoint.lat + (nextWaypoint.lat - currentWaypoint.lat) * bus.routeProgress,
+          lng: currentWaypoint.lng + (nextWaypoint.lng - currentWaypoint.lng) * bus.routeProgress
+        };
+      }
+
+      // Calculate heading towards next waypoint
+      bus.heading = Math.round(calculateHeading(bus.location, nextWaypoint));
+    } else {
+      // Random movement for other buses
+      const deltaLat = (Math.random() - 0.5) * 0.0015; // ~0.15 km
+      const deltaLng = (Math.random() - 0.5) * 0.0015;
+      const next = clampLudhiana(bus.location.lat + deltaLat, bus.location.lng + deltaLng);
+      bus.location = next;
+      bus.heading = (bus.heading + Math.floor(Math.random() * 40) - 20 + 360) % 360;
+      bus.speed = 15 + Math.random() * 15;
+    }
+
+    const payload = {
+      id: bus.id,
+      active: true,
+      location: bus.location,
+      heading: bus.heading,
+      speed: Math.round(bus.speed),
+      updatedAt: new Date().toISOString()
+    };
     io.emit('bus-location', payload);
   });
 }, 2000);
@@ -131,6 +231,31 @@ app.get('/health', (req, res) => {
     database: 'firestore',
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// Test Firestore connection endpoint
+app.get('/api/test/firestore', async (req, res) => {
+  try {
+    const testRef = db.collection('_test').doc('connection');
+    await testRef.set({
+      timestamp: new Date(),
+      message: 'Firestore connection test successful'
+    });
+    const snapshot = await testRef.get();
+    await testRef.delete(); // Clean up test document
+    res.json({
+      success: true,
+      message: 'Firestore connection working',
+      data: snapshot.data()
+    });
+  } catch (error) {
+    console.error('Firestore test error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Firestore connection failed',
+      details: error.message
+    });
+  }
 });
 
 // API Routes for bus tracker
