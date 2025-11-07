@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import Header from '../components/Common/Header'
 
 delete L.Icon.Default.prototype._getIconUrl
 
@@ -33,7 +34,8 @@ export default function PublicMap() {
 
     return (
         <div className="flex min-h-screen w-full flex-col">
-            <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <Header />
+            <div className="sticky top-16 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                 <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
                     <div className="text-sm font-medium">Select Bus</div>
                     <div className="w-56">
@@ -57,7 +59,7 @@ export default function PublicMap() {
                 </div>
             </div>
 
-            <div className="relative h-[calc(100vh-64px)] w-full">
+            <div className="relative h-[calc(100vh-128px)] w-full">
                 <MapContainer center={[30.9010, 75.8573]} zoom={13} className="h-full w-full">
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
