@@ -43,18 +43,16 @@ To set up and run the project locally, follow these general steps:
 2.  **Backend Setup:**
     *   Navigate to the `backend/` directory.
     *   Install dependencies: `npm install`
-    *   Create a `.env` file (refer to `backend/env.example`).
+    *   Create a `.env` file from `backend/env.example`.
     *   Configure Firebase Admin SDK.
     *   Start the backend server: `npm run dev`
 
 3.  **Frontend Setup:**
     *   Navigate to the `frontend/` directory.
     *   Install dependencies: `npm install`
-    *   Create a `.env.local` file (refer to `frontend/env.example`).
+    *   Create a `.env.local` file from `frontend/env.example`.
     *   Configure Firebase client-side SDK.
     *   Start the frontend development server: `npm run dev`
-
-For detailed installation and configuration instructions, please refer to **Appendix D: Installation and Setup Guide** in the `PROJECT_REPORT.md` file.
 
 ## 💡 Usage
 
